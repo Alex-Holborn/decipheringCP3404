@@ -1,22 +1,47 @@
 import Data
 import CrackedPair
+import time
 class Decipher:
 
     def __init__(self, cipher):
-        d = Data.Data()
+        start_time = time.time()
+        self.words_used = 0
+        self.data = Data.Data()
         self.cipher = cipher
-        self.clean_cipher = self.sanitise_input(self.cipher, d.punctuation)
-        self.letter_by_freq = self.create_char_dictionary(self.clean_cipher, False, d.alphabet)
+        self.clean_cipher = self.sanitise_input(self.cipher, self.data.punctuation)
+        self.letter_by_freq = self.create_char_dictionary(self.clean_cipher, False, self.data.alphabet)
         self.word_by_freq = self.create_word_dictionary(self.clean_cipher.split(" "))
-        self.unused_letters = self.get_unused_letters(self.clean_cipher, d.alphabet)
+        self.unused_letters = self.get_unused_letters(self.clean_cipher, self.data.alphabet)
         self.most_used_char_array = self.sort_dict_to_array(self.letter_by_freq)
         self.most_used_word_array = self.sort_dict_to_array(self.word_by_freq)
         self.cracked_letters = {}
         self.cracked_pairs = {}
 
-        for char in d.alphabet:
+        for char in self.data.alphabet:
             self.cracked_pairs[char] = CrackedPair.CrackedPair(char)
 
+        if not self.solve_most_common_characters(self.data):
+            print("failed to determine most common characters/words (if you are reading this I messed up)")
+            exit()
+
+        word_lists = self.data.words
+        for i in range(0, 5):
+            for word_list in word_lists:
+                #self.decipher(self.word_by_freq, word_list)
+                self.search_for_words_in_cipher(self.word_by_freq, word_list)
+        for word_list in word_lists:
+            self.review_substring_patterns(self.word_by_freq, word_list)
+        #print(self.get_unpaired_chars())
+
+        #self.common_fill_remainder()
+
+        #self.display_pairs_debug()
+        self.display_result(start_time)
+        #self.display_pairs()
+        self.display_grid()
+        #self.display_result(False)
+
+    def solve_most_common_characters(self, data):
         # first, let's find instances where letters double up in the cipher, but only keep one of each letter
         doubles = []
         prev = ''
@@ -24,19 +49,14 @@ class Decipher:
             if prev == char:
                 doubles.append(char)
             prev = char
-        #print(doubles)
+        # print(doubles)
 
         # now any letter that does not occur naturally (or very rarely) as a double can be excluded as a pair for any doubled letter
         excludes = "ahijkquvwxyz"
         for char in doubles:
-            for c in excludes:
-                self.cracked_pairs[char].add_impossible_pair(c)
-
-        # now lets assign any unused letters to the most infrequently used letters
-        for i, char in enumerate(self.unused_letters):
-            self.cracked_pairs[char].paired_char = d.letters_by_freq[d.letters_by_freq.__len__() - (1 + i)]
-            for char in self.cracked_pairs.keys():
-                self.cracked_pairs[char].add_impossible_pair(self.cracked_pairs[self.unused_letters[i]].paired_char)
+            if char in data.alphabet:
+                for c in excludes:
+                    self.cracked_pairs[char].add_impossible_pair(c)
 
         # lets assume the most common letter is an e
         e = self.most_used_char_array[0]
@@ -44,64 +64,106 @@ class Decipher:
 
         # now let's exclude e from every other char
         for char in self.cracked_pairs.keys():
-                self.cracked_pairs[char].add_impossible_pair('e')
+            self.cracked_pairs[char].add_impossible_pair('e')
+
+        a = self.get_words_of_length(1, self.word_by_freq, False)
+        # if there is only one word of length 1 it must be 'a' as it's highly unlikely to not have 'a' used at all
+        if a.__len__() == 1:
+            self.cracked_pairs[a[0]].paired_char = 'a'
 
         # 'the' is probably the most common 3 letter word that appears, lets find the most common 3 letter word with an e at the end
-        the = self.translate_to_cipher("the")
+        the = self.encrypt_to_cipher("the")
         found_the = self.find_words_with_phrase(self.word_by_freq, the, 3)
         if found_the:
             self.cracked_pairs[found_the[0][0]].set_paired_char('t')
             self.cracked_pairs[found_the[0][1]].set_paired_char('h')
+            # if we are here then the process to determine most common characters is complete and successful
+            return True
+        return False
 
-        word_lists = d.words
-        for i in range(0, 5):
-            for word_list in word_lists:
-                self.search_for_words_in_cipher(self.word_by_freq, word_list, True)
+    def review_substring_patterns(self, cipher_words, word_list):
+        for word in cipher_words:
+            translation = self.decrypt_from_cipher(word)
+            if '?' in translation:
+                for _word in word_list:
+                    s = self.decrypt_from_cipher(self.encrypt_to_cipher(_word))
+                    if s in translation:
+                        i = self.get_start_pos_in_string(translation, s)
+                        if self.get_amount_of_char_in_word(s, '?') == 1 and self.get_amount_of_char_in_word(translation, '?') == 1:
+                            for j, char in enumerate(translation):
+                                if char == '?':
+                                    self.cracked_pairs[word[j]].set_paired_char(_word[j - i])
+                        elif self.get_amount_of_char_in_word(s, '?') == self.get_amount_of_char_in_word(translation, '?'):
+                            pass
 
-        #self.display_pairs_debug()
-        self.display_result()
-        #self.display_result(False)
+    def get_start_pos_in_string(self, string, substring):
+        if substring in string:
+            for i, c in enumerate(string):
+                if string[i:i+len(substring)] == substring:
+                    return i
+        return -1
 
-    def find_wildcard_matches(self, cipher_words, search_term, restrict_to_full_words=True):
+    def get_unpaired_chars(self):
+        alphabet = self.data.letters_by_freq
+        used_chars = ""
+        unused = ""
+        for char in self.cracked_pairs.keys():
+            if self.cracked_pairs[char].is_char_paired():
+                used_chars += "{}".format(self.cracked_pairs[char].paired_char)
+        for char in alphabet:
+            if char not in used_chars:
+                unused += "{}".format(char)
+        return unused
+
+    def common_fill_remainder(self):
+        alphabet = self.data.letters_by_freq
+        for char in self.get_unpaired_chars():
+            for c in alphabet:
+                if not self.cracked_pairs[c].is_char_paired():
+                    self.cracked_pairs[c].set_paired_char(char)
+
+    def get_real_word_possible_matches_for_cipher_word(self,cipher_word, real_words):
+        # takes an encrypted word with possible wildcards and returns words it could be
+        matches = []
+        cipher_word_to_real = self.decrypt_from_cipher(cipher_word)
+        # print(cipher_word_to_real)
+        for word in real_words:
+            translation = self.encrypt_to_cipher(word)
+            if self.decrypt_from_cipher(translation) == cipher_word_to_real:
+                matches.append(word)
+        return matches
+
+    def get_wildcard_indexes(self, word):
+        indexes = []
+        for i, char in enumerate(word):
+            if char == '?':
+                indexes.append(i)
+        return indexes
+
+    def find_encrypted_wildcard_matches(self, cipher_words, search_term, restrict_to_full_words=True):
         if restrict_to_full_words:
             return self.find_words_with_phrase(cipher_words, search_term, search_term.__len__())
         return self.find_words_with_phrase(cipher_words, search_term)
 
     def search_for_words_in_cipher(self, cipher_words, search_words, restrict_to_full_words=True):
-        ##takes words and translates them into the cipher and then searches for them
-
-        #TODO: this needs re writing so we can take words containing the search_term and fill parts of it in
+        # takes words and translates them into the cipher and then searches for them
+        # TODO: this needs re writing so we can take words containing the search_term and fill parts of it in
         for word in search_words:
-            translation = self.translate_to_cipher(word)
-            indexes = []
-            for i, char in enumerate(translation):
-                if char == '?':
-                    indexes.append(i)
+            translation = self.encrypt_to_cipher(word)
+            indexes = self.get_wildcard_indexes(translation)
             chars = []
             for i in indexes:
                 chars.append(word[i])
-            #print("{} {} {}".format(word, indexes, chars))
-            duplicates_only = self.are_all_chars_same(chars)
-            search_results = self.find_wildcard_matches(cipher_words, translation, restrict_to_full_words)
-            #print("searching for {} - translates to {} - found {}".format(word, translation, search_results))
+            search_results = self.find_encrypted_wildcard_matches(cipher_words, translation, restrict_to_full_words)
             if not restrict_to_full_words:
-                for result in search_results:
-                    length = translation.__len__()
-                    for i, char in enumerate(result):
-                        if i + length <= result.__len__():
-                            s = ""
-                            for j in range(0 + i, i + length):
-                                s += result[j]
-                            if s == translation:
-                                result = s
-                                print(result)
+                print("full words only supported currently")
+                exit()
             if search_results:
-                if self.does_word_contain_char(translation, '?'):
-                    if self.get_amount_of_char_in_word(translation, '?') == 1 or (duplicates_only and self.get_amount_of_char_in_word(translation, '?') > 1):
+                if '?' in translation:
+                    if self.get_amount_of_char_in_word(translation, '?') == 1:
                         for i, char in enumerate(translation):
                             if char == '?':
-                                letter = word[i]
-                                #print(i)
+                                letter = word[i].lower()
                                 chars = ""
                                 for _word in search_results:
                                     chars += self.cracked_pairs[_word[i]].paired_char
@@ -109,9 +171,20 @@ class Decipher:
                                     if self.cracked_pairs[_word[i]].paired_char == '?':
                                         if chars.__len__() == 1 or self.get_amount_of_char_in_word(chars, '?') == 1:
                                             self.cracked_pairs[_word[i]].set_paired_char(letter)
-                                           # print("{} -> {} = {} -> {}".format(word, translation, search_results, _word))
+                                            self.words_used += 1
+
+    def find_words_in_cypher(self, cipher_words, search_term, is_full_words_only=True):
+        #translates the search_term into the cipher, works out which letters have not been deciphered yet and assigns them wildcards
+        translation = self.encrypt_to_cipher(search_term)
+        wildcard_indexes = []
+        for i, char in enumerate(translation):
+            if char == '?':
+                wildcard_indexes.append(i)
+        return self.find_encrypted_wildcard_matches(cipher_words, translation, True)
 
     def are_all_chars_same(self, char_array):
+        if len(char_array) == 0:
+            return False
         prev = ''
         for c in char_array:
             if prev == '':
@@ -127,12 +200,6 @@ class Decipher:
             if c == char:
                 return i
 
-    def does_word_contain_char(self, word, char):
-        for c in word:
-            if c == char:
-                return True
-        return False
-
     def get_amount_of_char_in_word(self, word, char):
         count = 0
         for c in word:
@@ -140,13 +207,6 @@ class Decipher:
                 count += 1
         return count
 
-
-    def has_char_been_solved(self, char):
-        if char == '?': return False
-        for k in self.cracked_pairs.keys():
-            if self.cracked_pairs[k].paired_char == char:
-                return True
-        return False
 
     def create_char_dictionary(self, input, allow_spaces, alphabet):
         char_dict = {}
@@ -260,13 +320,39 @@ class Decipher:
                     suffixes[suffix] += 1
         return suffixes
 
-    def translate_to_cipher(self, word):
+    def encrypt_to_cipher(self, word):
+        # takes a word and attempts to translate it back into the cypher, an incomplete key/value set for CrackedPairs will return '?'
         s = ""
         for char in word:
             s += self.get_char_representative_in_cipher(char)
         return s
 
-    def display_result(self, preserve_punctuation=True):
+    def decrypt_from_cipher(self, word):
+        #takes an encrypted word and attempts to decrpyt it using the crackedpairs, any incomplete decryptions return a '?' in place of translated chars
+        s = ""
+        for char in word:
+            if char != '?':
+                try:
+                    int(char)  # If there are numbers in the cipher we just ignore them
+                except:
+                    s += self.cracked_pairs[char].paired_char
+            else:
+                s += '?'
+        return s
+
+    def display_result(self, start_time, preserve_punctuation=True):
+        s = "word"
+        if self.words_used > 1:
+            s += "s"
+        f = self.decide_solve_confidence()
+        if f >= 100:
+            print("Took {:.3f} seconds to completely solve the cipher, using {} {}".format(
+                time.time() - start_time, self.words_used, s))
+        else:
+            print("Took {:.3f} seconds to solve cipher to a {:.1f}% confidence, using {} {}".format(time.time() - start_time, f, self.words_used, s))
+        print(self.get_result(preserve_punctuation))
+
+    def get_result(self, preserve_punctuation):
         alphabet = "abcdefghijklmnopqrstuvwxyz"
         new_cipher = ""
         prev = ' '
@@ -290,7 +376,7 @@ class Decipher:
                 else:
                     new_cipher += char
             prev = char
-        print(new_cipher)
+        return new_cipher
 
     def get_char_representative_in_cipher(self, char):
         #takes a char and translates it into cipher speak, if we have found a match for it. otherwise returns '?'
@@ -311,7 +397,7 @@ class Decipher:
     def find_words_with_phrase(self, word_list, phrase, size_limit=-1):
         # phrase is a string with possible '?' wildcard chars
         # this function searches for all words containing the phrase and returns an array of all relevant words
-        # size of words returned can be limited by optional parameter size_limit
+        # size of words returned can be limited by optional parameter size_limit (so we can search chunks of a word)
         # will return an empty array if no suitable words found
         words = []
         nonWildcardIndexes = []
@@ -338,6 +424,29 @@ class Decipher:
                         words.append(word)
         return words
 
+    def decide_solve_confidence(self):
+        total = 0
+        solved = 0
+        for k in self.cracked_pairs.keys():
+            total += 1
+            if self.cracked_pairs[k].paired_char != '?':
+                solved += 1
+        return (solved/total) * 100
+
+    def display_pairs(self):
+        for c in self.cracked_pairs.keys():
+            print("{} -> {} ({})".format(self.cracked_pairs[c].representing_char, self.cracked_pairs[c].paired_char, self.cracked_pairs[c].get_value_differences() % 4))
+
+    def display_grid(self):
+        grid = []
+        width = 5
+        for i in range(0, width):
+            grid.append(["|"])
+        for i, c in enumerate(self.cracked_pairs.keys()):
+            grid[i%width][0] += " {} |".format(self.cracked_pairs[c].paired_char)
+        for s in grid:
+            print(s[0])
+            print("-----------------")
 
 Decipher("tigcsvqhpi hj qat vchbhqhet gcsvqplcfvahg pvtcfqhpi xjtm qp tijxct jtgctgs pc gpizhmtiqhfohqs pz " +
          "hizpcbfqhpi qcfijbhqqtm fgcpjj fi xijtgxctm gpbbxihgfqhpi gafiito. qat tigcsvqhpi pvtcfqhpi qfutj f vhtgt pz" +
@@ -345,19 +454,13 @@ Decipher("tigcsvqhpi hj qat vchbhqhet gcsvqplcfvahg pvtcfqhpi xjtm qp tijxct jtg
          "jtgctq gcsvqplcfvahg uts. mtgcsvqhpi hj qat ctetcjt pvtcfqhpi qp tigcsvqhpi. qat ctgthetc dap apomj qat gpcctgq"+
          " jtgctq uts gfi ctgpetc qat btjjflt (vofhiqtkq) zcpb qat gcsvqplcfb (ghvatcqtkq).")
 
-Decipher("bftuhq, hornfb rgk rklunrg hopcuk opc qou zrdqpbfhrqfpg wbpilun dpxlk iu xhuk qp dpghqbxdq r wxilfd-vus " +
-         "dbswqphshqun (qofh fh qou cull-vgpcg bhr dbswqphshqun). nubvlu rgk oullnrg xhuk qou vgrwhrdv wbpilun fg qoufb"+
-        " dpghqbxdqfpg. ndulfudu ixflq r hshqun cofdo rwwlfuk ubbpb dpbbudqfge dpkuh. lrqub fg 1985, ulernrl kuhfeguk "+
-         "r wxilfd-vus dbswqphshqun xhfge qou kfhdbuqu lperbfqon wbpilun. nfllub rgk vpilfqy hxeeuhquk xhfge ullfwqfd "+
-         "dxbtuh qp kuhfeg wxilfd-vus dbswqphshqunh.")
-
-Decipher("vehmdrt-uts (dnkq gdnnto ksbbtrehg) gesvrqkskrtbk wkt rct kdbt ktgetr uts zqe tjgesvrhqj djo otgesvrhqj. "+
-         "dnrcqwyc rct tjgesvrhqj djo otgesvrhqj utsk oq jqr jtto rq it hotjrhgdn, rct ujqfntoyt qz qjt qz rctb "+
-         "kwzzhgtk rq qirdhj rct qrcte. vwinhg-uts (dnkq gdnnto dksbbtrehg) gesvrqkskrtbk wkt d ohzztetjr uts zqe "+
-         "tjgesvrhqj djo otgesvrhqj. rct ujqfntoyt qz qjt uts, cqftmte, oqtk jqr dnnqf rct qrcte rq it otrtebhjto.it")
-
 Decipher("gq dtj mxgfvrs cutrgyul qatq qau tjjxbwqgph pz th gehpcthq tqqtfvuc dtj hpq cutrgjqgf. bpjq utcrs uxcpwuth"+
          " fcswqpjsjqubj ducu lujgehul qp dgqajqthl qau tqqtfvj pz ulxftqul pwwphuhqj dap vhud qau uhfcswqgph wcpfujj,"+
          " nxq lgl hpq vhpd qau fcswqpectwagf vus. tllgqgphtrrs, gq dtj cumxujqul qatq qau uhfcswqgph thl lufcswqgph "+
          "wcpfujjuj fpxrl nu lphu mxgfvrs, xjxtrrs ns athl, pc dgqa qau tgl pz bufathgftr luigfuj jxfa "+
          "tj qau fgwauc lgjv ghiuhqul ns ruph ntqqgjt trnucqg.")
+
+Decipher("ij 1976 pizziu cjp bummecj ijsfrpxhup sbu hrjhuws rz wxdmih-vut hftwsrktksuek. wxdmih-vut hftwsrktksuek "+
+         "(cmkr hcmmup ckteeusfih ktksuek) xku sgr pizzufujs vutk; rju ik wxdmih gbimu sbu rsbuf ik vuws kuhfus. "+
+         "hmucfmt, is ik fuaxifup sbcs hrewxsijo sbu kuhfus vut zfre sbu wxdmih rju bck sr du ijsfchscdmu. ij 1978 "+
+         "sbfuu pukiojk dckup rj sbu jrsirj rz wxdmih-vut ktksuek gufu wxdmikbup.")
