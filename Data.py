@@ -3,7 +3,7 @@ class Data:
     def __init__(self):
 
         twoLetterWords = ["of", "to", "in", "it", "is", "be", "as", "at", "so", "we", "he", "by", "or", "on", "do", "if",
-                          "me", "my", "up", "an", "go", "no", "us", "am"]
+                          "me", "my", "up", "an", "go", "no", "us", "am", "qu"]
         threeLetterNouns = ["use", "odd", "boy", "way", "key", "bit"]  # okay, not strictly nouns, but words that can have an s appended
         threeLetterVerbs = ["use", "buy", "add"]   # words that can have -ing or -ed suffix added
         threeLetterWords = ["the", "and", "for", "are", "but", "bet", "bat", "hot", "not", "you", "all", "any", "can", "had", "her", "was",
@@ -13,7 +13,7 @@ class Data:
         fourLetterVerbs = ["pace", "text", "back", "time", "know", "want", "have", "live", "post", "show", "call"]
         fourLetterWords = ["that", "with", "have", "this", "from", "they", "been", "much", "some", "time", "text",
                            "most", "also", "four", "five", "been", "were", "east", "west", "free", "area", "keep", "kept",
-                           "onto", "upon", "then", "them"]
+                           "onto", "upon", "then", "them", "over"]
         fiveLetterNouns = ["attack", "crypt", "place", "piece", "front", "device", "arrear", "design"]
         fiveLetterVerbs = ["attack", "crypt", "place", "piece", "front"]
         fiveLetterWords = ["attack", "crypt", "three", "place", "peace", "piece" "front", "found", "north", "south",
