@@ -27,19 +27,12 @@ class Decipher:
         word_lists = self.data.words
         for i in range(0, 5):
             for word_list in word_lists:
-                #self.decipher(self.word_by_freq, word_list)
                 self.search_for_words_in_cipher(self.word_by_freq, word_list)
         for word_list in word_lists:
             self.review_substring_patterns(self.word_by_freq, word_list)
-        #print(self.get_unpaired_chars())
 
-        #self.common_fill_remainder()
-
-        #self.display_pairs_debug()
         self.display_result(start_time)
-        #self.display_pairs()
         self.display_grid()
-        #self.display_result(False)
 
     def solve_most_common_characters(self, data):
         # first, let's find instances where letters double up in the cipher, but only keep one of each letter
@@ -49,7 +42,6 @@ class Decipher:
             if prev == char:
                 doubles.append(char)
             prev = char
-        # print(doubles)
 
         # now any letter that does not occur naturally (or very rarely) as a double can be excluded as a pair for any doubled letter
         excludes = "ahijkquvwxyz"
@@ -126,7 +118,6 @@ class Decipher:
         # takes an encrypted word with possible wildcards and returns words it could be
         matches = []
         cipher_word_to_real = self.decrypt_from_cipher(cipher_word)
-        # print(cipher_word_to_real)
         for word in real_words:
             translation = self.encrypt_to_cipher(word)
             if self.decrypt_from_cipher(translation) == cipher_word_to_real:
