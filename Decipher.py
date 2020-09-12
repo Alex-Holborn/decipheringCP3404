@@ -31,6 +31,8 @@ class Decipher:
         for word_list in word_lists:
             self.review_substring_patterns(self.word_by_freq, word_list)
 
+        self.fill_unused_chars()
+
         self.display_result(start_time)
         self.display_grid()
 
@@ -73,6 +75,9 @@ class Decipher:
             return True
         return False
 
+    def fill_unused_chars(self):
+        print("set up unused chars")
+
     def review_substring_patterns(self, cipher_words, word_list):
         for word in cipher_words:
             translation = self.decrypt_from_cipher(word)
@@ -106,13 +111,6 @@ class Decipher:
             if char not in used_chars:
                 unused += "{}".format(char)
         return unused
-
-    def common_fill_remainder(self):
-        alphabet = self.data.letters_by_freq
-        for char in self.get_unpaired_chars():
-            for c in alphabet:
-                if not self.cracked_pairs[c].is_char_paired():
-                    self.cracked_pairs[c].set_paired_char(char)
 
     def get_real_word_possible_matches_for_cipher_word(self,cipher_word, real_words):
         # takes an encrypted word with possible wildcards and returns words it could be
@@ -437,21 +435,22 @@ class Decipher:
             grid[i%width][0] += " {} |".format(self.cracked_pairs[c].paired_char)
         for s in grid:
             print(s[0])
-            print("-----------------")
+            print("---------------------------")
 
 Decipher("tigcsvqhpi hj qat vchbhqhet gcsvqplcfvahg pvtcfqhpi xjtm qp tijxct jtgctgs pc gpizhmtiqhfohqs pz " +
          "hizpcbfqhpi qcfijbhqqtm fgcpjj fi xijtgxctm gpbbxihgfqhpi gafiito. qat tigcsvqhpi pvtcfqhpi qfutj f vhtgt pz" +
          " hizpcbfqhpi, fojp gfootm btjjflt pc vofhiqtkq, fim qcfijzpcbj hq hiqp f gcsvqplcfb pc ghvatcqtkq xjhil f "+
          "jtgctq gcsvqplcfvahg uts. mtgcsvqhpi hj qat ctetcjt pvtcfqhpi qp tigcsvqhpi. qat ctgthetc dap apomj qat gpcctgq"+
          " jtgctq uts gfi ctgpetc qat btjjflt (vofhiqtkq) zcpb qat gcsvqplcfb (ghvatcqtkq).")
+#
+# Decipher("gq dtj mxgfvrs cutrgyul qatq qau tjjxbwqgph pz th gehpcthq tqqtfvuc dtj hpq cutrgjqgf. bpjq utcrs uxcpwuth"+
+#          " fcswqpjsjqubj ducu lujgehul qp dgqajqthl qau tqqtfvj pz ulxftqul pwwphuhqj dap vhud qau uhfcswqgph wcpfujj,"+
+#          " nxq lgl hpq vhpd qau fcswqpectwagf vus. tllgqgphtrrs, gq dtj cumxujqul qatq qau uhfcswqgph thl lufcswqgph "+
+#          "wcpfujjuj fpxrl nu lphu mxgfvrs, xjxtrrs ns athl, pc dgqa qau tgl pz bufathgftr luigfuj jxfa "+
+#          "tj qau fgwauc lgjv ghiuhqul ns ruph ntqqgjt trnucqg.")
+#
+# Decipher("ij 1976 pizziu cjp bummecj ijsfrpxhup sbu hrjhuws rz wxdmih-vut hftwsrktksuek. wxdmih-vut hftwsrktksuek "+
+#          "(cmkr hcmmup ckteeusfih ktksuek) xku sgr pizzufujs vutk; rju ik wxdmih gbimu sbu rsbuf ik vuws kuhfus. "+
+#          "hmucfmt, is ik fuaxifup sbcs hrewxsijo sbu kuhfus vut zfre sbu wxdmih rju bck sr du ijsfchscdmu. ij 1978 "+
+#          "sbfuu pukiojk dckup rj sbu jrsirj rz wxdmih-vut ktksuek gufu wxdmikbup.")
 
-Decipher("gq dtj mxgfvrs cutrgyul qatq qau tjjxbwqgph pz th gehpcthq tqqtfvuc dtj hpq cutrgjqgf. bpjq utcrs uxcpwuth"+
-         " fcswqpjsjqubj ducu lujgehul qp dgqajqthl qau tqqtfvj pz ulxftqul pwwphuhqj dap vhud qau uhfcswqgph wcpfujj,"+
-         " nxq lgl hpq vhpd qau fcswqpectwagf vus. tllgqgphtrrs, gq dtj cumxujqul qatq qau uhfcswqgph thl lufcswqgph "+
-         "wcpfujjuj fpxrl nu lphu mxgfvrs, xjxtrrs ns athl, pc dgqa qau tgl pz bufathgftr luigfuj jxfa "+
-         "tj qau fgwauc lgjv ghiuhqul ns ruph ntqqgjt trnucqg.")
-
-Decipher("ij 1976 pizziu cjp bummecj ijsfrpxhup sbu hrjhuws rz wxdmih-vut hftwsrktksuek. wxdmih-vut hftwsrktksuek "+
-         "(cmkr hcmmup ckteeusfih ktksuek) xku sgr pizzufujs vutk; rju ik wxdmih gbimu sbu rsbuf ik vuws kuhfus. "+
-         "hmucfmt, is ik fuaxifup sbcs hrewxsijo sbu kuhfus vut zfre sbu wxdmih rju bck sr du ijsfchscdmu. ij 1978 "+
-         "sbfuu pukiojk dckup rj sbu jrsirj rz wxdmih-vut ktksuek gufu wxdmikbup.")
