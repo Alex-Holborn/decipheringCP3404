@@ -1,6 +1,8 @@
 import Data
 import CrackedPair
 import time
+
+
 class Decipher:
 
     def __init__(self, cipher):
@@ -14,7 +16,6 @@ class Decipher:
         self.unused_letters = self.get_unused_letters(self.clean_cipher, self.data.alphabet)
         self.most_used_char_array = self.sort_dict_to_array(self.letter_by_freq)
         self.most_used_word_array = self.sort_dict_to_array(self.word_by_freq)
-        self.cracked_letters = {}
         self.cracked_pairs = {}
 
         for char in self.data.alphabet:
@@ -32,9 +33,13 @@ class Decipher:
             self.review_substring_patterns(self.word_by_freq, word_list)
 
         self.fill_unused_chars()
-
-        self.display_result(start_time)
-        self.display_grid()
+        print(self.cipher)
+        self.display_result(start_time, True, True)
+        print("\n")
+        self.display_grid(True)
+        print("\n")
+        # self.display_pairs()
+        #self.display_inline()
 
     def solve_most_common_characters(self, data):
         # first, let's find instances where letters double up in the cipher, but only keep one of each letter
@@ -76,7 +81,13 @@ class Decipher:
         return False
 
     def fill_unused_chars(self):
-        print("set up unused chars")
+        non_paired_chars = []
+        s = self.get_result(False)
+        for c in self.data.alphabet:
+            if c not in s:
+                non_paired_chars.append(c)
+        for i, char in enumerate(self.unused_letters):
+            self.cracked_pairs[char].set_paired_char(non_paired_chars[i])
 
     def review_substring_patterns(self, cipher_words, word_list):
         for word in cipher_words:
@@ -329,16 +340,16 @@ class Decipher:
                 s += '?'
         return s
 
-    def display_result(self, start_time, preserve_punctuation=True):
+    def display_result(self, start_time, preserve_punctuation=True, is_filling_unknowns=False):
         s = "word"
         if self.words_used > 1:
             s += "s"
-        f = self.decide_solve_confidence()
+        f = self.decide_solve_confidence(is_filling_unknowns)
         if f >= 100:
             print("Took {:.3f} seconds to completely solve the cipher, using {} {}".format(
                 time.time() - start_time, self.words_used, s))
         else:
-            print("Took {:.3f} seconds to solve cipher to a {:.1f}% confidence, using {} {}".format(time.time() - start_time, f, self.words_used, s))
+            print("Took {:.3f} seconds to solve cipher to a {:.1f}% confidence, interpreting {} {}.".format(time.time() - start_time, f, self.words_used, s))
         print(self.get_result(preserve_punctuation))
 
     def get_result(self, preserve_punctuation):
@@ -413,44 +424,105 @@ class Decipher:
                         words.append(word)
         return words
 
-    def decide_solve_confidence(self):
+    def decide_solve_confidence(self, is_filling_unknowns):
         total = 0
         solved = 0
         for k in self.cracked_pairs.keys():
             total += 1
             if self.cracked_pairs[k].paired_char != '?':
                 solved += 1
+        if is_filling_unknowns:
+            return ((solved - len(self.unused_letters))/total) * 100
         return (solved/total) * 100
 
     def display_pairs(self):
-        for c in self.cracked_pairs.keys():
-            print("{} -> {} ({})".format(self.cracked_pairs[c].representing_char, self.cracked_pairs[c].paired_char, self.cracked_pairs[c].get_value_differences() % 4))
+        for group in self.group_pairs_by_modulo(6):
+            print(group)
+        #for c in self.cracked_pairs.keys():
+        #    print("{} -> {} ({})".format(self.cracked_pairs[c].representing_char, self.cracked_pairs[c].paired_char, self.cracked_pairs[c].get_value_differences() % 5))
 
-    def display_grid(self):
-        grid = []
-        width = 5
-        for i in range(0, width):
-            grid.append(["|"])
-        for i, c in enumerate(self.cracked_pairs.keys()):
-            grid[i%width][0] += " {} |".format(self.cracked_pairs[c].paired_char)
-        for s in grid:
-            print(s[0])
-            print("---------------------------")
+    def group_pairs_by_modulo(self, modulo):
+        groups = []
+        for i in range(0, modulo):
+            groups.append([])
+        for k in self.cracked_pairs.keys():
+            groups[self.cracked_pairs[k].get_value_differences() % modulo].append(k)
+        return groups
+
+    def display_inline(self):
+        s = ""
+        for k in self.cracked_pairs.keys():
+            s += " {}".format(k)
+        print(s)
+        s = ""
+        for k in self.cracked_pairs.keys():
+            s += " |"
+        print(s)
+        s = ""
+        for k in self.cracked_pairs.keys():
+            s += " V"
+        print(s)
+        s = ""
+        for k in self.cracked_pairs.keys():
+            s += " {}".format(self.cracked_pairs[k].paired_char)
+        print(s)
+
+    def display_grid(self, display_side_by_side=False):
+        amt_in_column = 5
+        columns = []
+        columns2 = []
+        column = []
+        column2 = []
+        for i in range(0, len(self.cracked_pairs.keys())):
+            for j, c in enumerate(self.cracked_pairs.keys()):
+                if j == i:
+                        column.append(self.cracked_pairs[c].paired_char)
+                        column2.append(self.cracked_pairs[c].representing_char)
+            if i % amt_in_column == 0 and i != 0:
+                columns.append(column)
+                columns2.append(column2)
+                column = []
+                column2 = []
+        max_len = 0
+        for c in columns:
+            if len(c) > max_len:
+                max_len = len(c)
+
+        for i in range(0, max_len):
+            s = ""
+            if display_side_by_side:
+                for c in columns2:
+                    if i >= len(c):
+                        s += "   "
+                    else:
+                        s += " {} ".format(c[i])
+            if display_side_by_side:
+                if i == (max_len/2) - 1:
+                    s += "  ->  "
+                else:
+                    s += "      "
+            for c in columns:
+                if i >= len(c):
+                    s += "   "
+                else:
+                    s += " {} ".format(c[i])
+            print(s)
+
 
 Decipher("tigcsvqhpi hj qat vchbhqhet gcsvqplcfvahg pvtcfqhpi xjtm qp tijxct jtgctgs pc gpizhmtiqhfohqs pz " +
          "hizpcbfqhpi qcfijbhqqtm fgcpjj fi xijtgxctm gpbbxihgfqhpi gafiito. qat tigcsvqhpi pvtcfqhpi qfutj f vhtgt pz" +
          " hizpcbfqhpi, fojp gfootm btjjflt pc vofhiqtkq, fim qcfijzpcbj hq hiqp f gcsvqplcfb pc ghvatcqtkq xjhil f "+
          "jtgctq gcsvqplcfvahg uts. mtgcsvqhpi hj qat ctetcjt pvtcfqhpi qp tigcsvqhpi. qat ctgthetc dap apomj qat gpcctgq"+
          " jtgctq uts gfi ctgpetc qat btjjflt (vofhiqtkq) zcpb qat gcsvqplcfb (ghvatcqtkq).")
-#
-# Decipher("gq dtj mxgfvrs cutrgyul qatq qau tjjxbwqgph pz th gehpcthq tqqtfvuc dtj hpq cutrgjqgf. bpjq utcrs uxcpwuth"+
-#          " fcswqpjsjqubj ducu lujgehul qp dgqajqthl qau tqqtfvj pz ulxftqul pwwphuhqj dap vhud qau uhfcswqgph wcpfujj,"+
-#          " nxq lgl hpq vhpd qau fcswqpectwagf vus. tllgqgphtrrs, gq dtj cumxujqul qatq qau uhfcswqgph thl lufcswqgph "+
-#          "wcpfujjuj fpxrl nu lphu mxgfvrs, xjxtrrs ns athl, pc dgqa qau tgl pz bufathgftr luigfuj jxfa "+
-#          "tj qau fgwauc lgjv ghiuhqul ns ruph ntqqgjt trnucqg.")
-#
-# Decipher("ij 1976 pizziu cjp bummecj ijsfrpxhup sbu hrjhuws rz wxdmih-vut hftwsrktksuek. wxdmih-vut hftwsrktksuek "+
-#          "(cmkr hcmmup ckteeusfih ktksuek) xku sgr pizzufujs vutk; rju ik wxdmih gbimu sbu rsbuf ik vuws kuhfus. "+
-#          "hmucfmt, is ik fuaxifup sbcs hrewxsijo sbu kuhfus vut zfre sbu wxdmih rju bck sr du ijsfchscdmu. ij 1978 "+
-#          "sbfuu pukiojk dckup rj sbu jrsirj rz wxdmih-vut ktksuek gufu wxdmikbup.")
+
+Decipher("gq dtj mxgfvrs cutrgyul qatq qau tjjxbwqgph pz th gehpcthq tqqtfvuc dtj hpq cutrgjqgf. bpjq utcrs uxcpwuth"+
+         " fcswqpjsjqubj ducu lujgehul qp dgqajqthl qau tqqtfvj pz ulxftqul pwwphuhqj dap vhud qau uhfcswqgph wcpfujj,"+
+         " nxq lgl hpq vhpd qau fcswqpectwagf vus. tllgqgphtrrs, gq dtj cumxujqul qatq qau uhfcswqgph thl lufcswqgph "+
+         "wcpfujjuj fpxrl nu lphu mxgfvrs, xjxtrrs ns athl, pc dgqa qau tgl pz bufathgftr luigfuj jxfa "+
+         "tj qau fgwauc lgjv ghiuhqul ns ruph ntqqgjt trnucqg.")
+
+Decipher("ij 1976 pizziu cjp bummecj ijsfrpxhup sbu hrjhuws rz wxdmih-vut hftwsrktksuek. wxdmih-vut hftwsrktksuek "+
+         "(cmkr hcmmup ckteeusfih ktksuek) xku sgr pizzufujs vutk; rju ik wxdmih gbimu sbu rsbuf ik vuws kuhfus. "+
+         "hmucfmt, is ik fuaxifup sbcs hrewxsijo sbu kuhfus vut zfre sbu wxdmih rju bck sr du ijsfchscdmu. ij 1978 "+
+         "sbfuu pukiojk dckup rj sbu jrsirj rz wxdmih-vut ktksuek gufu wxdmikbup.")
 
