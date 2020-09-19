@@ -13,11 +13,11 @@ class Data:
         fourLetterVerbs = ["pace", "text", "back", "time", "know", "want", "have", "live", "post", "show", "call"]
         fourLetterWords = ["that", "with", "have", "this", "from", "they", "been", "much", "some", "time", "text",
                            "most", "also", "four", "five", "been", "were", "east", "west", "free", "area", "keep", "kept",
-                           "onto", "upon", "then", "them", "over"]
+                           "onto", "upon", "then", "them", "over", "here"]
         fiveLetterNouns = ["attack", "crypt", "place", "piece", "front", "device", "arrear", "design"]
         fiveLetterVerbs = ["attack", "crypt", "place", "piece", "front"]
         fiveLetterWords = ["attack", "crypt", "three", "place", "peace", "piece" "front", "found", "north", "south",
-                           "early", "there", "where", "quick", "other", "think", "thank", "thing", "clear"]
+                           "early", "there", "where", "quick", "other", "think", "thank", "thing", "clear", "under"]
 
         sixPlusLetterWords = ["across", "access", "receive", "recover", "realise", "realize", "public", "private",
                               "object", "within", "without", "require"]
