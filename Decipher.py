@@ -38,6 +38,9 @@ class Decipher:
         print("\n")
         self.display_grid(True)
         print("\n")
+        self.get_rep_char_grid()
+
+        print(self.unused_letters)
         # self.display_pairs()
         #self.display_inline()
 
@@ -435,20 +438,6 @@ class Decipher:
             return ((solved - len(self.unused_letters))/total) * 100
         return (solved/total) * 100
 
-    def display_pairs(self):
-        for group in self.group_pairs_by_modulo(6):
-            print(group)
-        #for c in self.cracked_pairs.keys():
-        #    print("{} -> {} ({})".format(self.cracked_pairs[c].representing_char, self.cracked_pairs[c].paired_char, self.cracked_pairs[c].get_value_differences() % 5))
-
-    def group_pairs_by_modulo(self, modulo):
-        groups = []
-        for i in range(0, modulo):
-            groups.append([])
-        for k in self.cracked_pairs.keys():
-            groups[self.cracked_pairs[k].get_value_differences() % modulo].append(k)
-        return groups
-
     def display_inline(self):
         s = ""
         for k in self.cracked_pairs.keys():
@@ -473,6 +462,7 @@ class Decipher:
         columns2 = []
         column = []
         column2 = []
+        columns3 = self.get_rep_char_grid()
         for i in range(0, len(self.cracked_pairs.keys())):
             for j, c in enumerate(self.cracked_pairs.keys()):
                 if j == i:
@@ -506,7 +496,43 @@ class Decipher:
                     s += "   "
                 else:
                     s += " {} ".format(c[i])
+            if display_side_by_side:
+                if i == (max_len/2) - 1:
+                    s += "  ->  "
+                else:
+                    s += "      "
+            for c in columns3:
+                if i >= len(c):
+                    s += "   "
+                else:
+                    s += " {} ".format(c[i])
             print(s)
+
+
+    def get_rep_char_grid(self):
+        row_max = 5
+        col_max = 6
+        columns = []
+        used = []
+        a = self.data.alphabet
+        for x in range(0, row_max):
+            column = []
+            for y in range(0, col_max):
+                for k in self.cracked_pairs.keys():
+                    if self.cracked_pairs[k].paired_char == a[(x * row_max) + y]:
+                        if k not in used:
+                            used.append(k)
+                            column.append(k)
+            columns.append(column)
+        max_len = len(columns[0])
+        for i in range(0, max_len):
+            s = ""
+            for c in columns:
+                if len(c) > i:
+                    s += " {} ".format(c[i])
+        return columns
+
+
 
 
 Decipher("tigcsvqhpi hj qat vchbhqhet gcsvqplcfvahg pvtcfqhpi xjtm qp tijxct jtgctgs pc gpizhmtiqhfohqs pz " +
@@ -525,4 +551,3 @@ Decipher("ij 1976 pizziu cjp bummecj ijsfrpxhup sbu hrjhuws rz wxdmih-vut hftwsr
          "(cmkr hcmmup ckteeusfih ktksuek) xku sgr pizzufujs vutk; rju ik wxdmih gbimu sbu rsbuf ik vuws kuhfus. "+
          "hmucfmt, is ik fuaxifup sbcs hrewxsijo sbu kuhfus vut zfre sbu wxdmih rju bck sr du ijsfchscdmu. ij 1978 "+
          "sbfuu pukiojk dckup rj sbu jrsirj rz wxdmih-vut ktksuek gufu wxdmikbup.")
-
