@@ -14,15 +14,3 @@ class CrackedPair:
 
     def is_char_paired(self):
         return self.paired_char != '?'
-
-    def get_value_differences(self):
-        if self.paired_char == '?':
-            return -1
-        return self.get_value_of_char(self.representing_char) - self.get_value_of_char(self.paired_char)
-
-    def get_value_of_char(self, char):
-        alphabet = "abcdefghijklmnopqrstuvwxyz"
-        for i, c in enumerate(alphabet):
-            if c == char:
-                return i
-        return -1
