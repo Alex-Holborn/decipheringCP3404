@@ -26,7 +26,7 @@ class Decipher:
             exit()
 
         word_lists = self.data.words
-        for i in range(0, 5):
+        for i in range(0, 2):
             for word_list in word_lists:
                 self.search_for_words_in_cipher(self.word_by_freq, word_list)
         for word_list in word_lists:
@@ -34,13 +34,15 @@ class Decipher:
 
         self.fill_unused_chars()
         print(self.cipher)
+        print("\n")
         self.display_result(start_time, True, True)
         print("\n")
         self.display_grid(True)
         print("\n")
         self.get_rep_char_grid()
 
-        print(self.unused_letters)
+        print("Unused cipher letters: {}".format(self.unused_letters))
+        print("\n")
         # self.display_pairs()
         #self.display_inline()
 
@@ -60,28 +62,29 @@ class Decipher:
                 for c in excludes:
                     self.cracked_pairs[char].add_impossible_pair(c)
 
-        # lets assume the most common letter is an e
-        e = self.most_used_char_array[0]
-        self.cracked_pairs[e].paired_char = 'e'
-
-        # now let's exclude e from every other char
-        for char in self.cracked_pairs.keys():
-            self.cracked_pairs[char].add_impossible_pair('e')
-
         a = self.get_words_of_length(1, self.word_by_freq, False)
         # if there is only one word of length 1 it must be 'a' as it's highly unlikely to not have 'a' used at all
         if a.__len__() == 1:
             self.cracked_pairs[a[0]].paired_char = 'a'
 
-        # 'the' is probably the most common 3 letter word that appears, lets find the most common 3 letter word with an e at the end
-        the = self.encrypt_to_cipher("the")
-        found_the = self.find_words_with_phrase(self.word_by_freq, the, 3)
-        if found_the:
-            self.cracked_pairs[found_the[0][0]].set_paired_char('t')
-            self.cracked_pairs[found_the[0][1]].set_paired_char('h')
-            # if we are here then the process to determine most common characters is complete and successful
-            return True
-        return False
+        # lets assume the most common letter is an e
+        found = False
+        for i in range(0, len(self.most_used_char_array)):
+            if found:
+                pass
+            else:
+                e = self.most_used_char_array[i]
+                self.cracked_pairs[e].paired_char = 'e'
+                the = self.encrypt_to_cipher("th")
+                the += e
+                found_the = self.find_words_with_phrase(self.word_by_freq, the, 3)
+                if found_the:
+                    self.cracked_pairs[found_the[0][0]].set_paired_char('t')
+                    self.cracked_pairs[found_the[0][1]].set_paired_char('h')
+                    self.cracked_pairs[e].paired_char = 'e'
+                    found = True
+        return found
+
 
     def fill_unused_chars(self):
         non_paired_chars = []
@@ -353,6 +356,7 @@ class Decipher:
                 time.time() - start_time, self.words_used, s))
         else:
             print("Took {:.3f} seconds to solve cipher to a {:.1f}% confidence, interpreting {} {}.".format(time.time() - start_time, f, self.words_used, s))
+        print("\n")
         print(self.get_result(preserve_punctuation))
 
     def get_result(self, preserve_punctuation):
