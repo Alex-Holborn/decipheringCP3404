@@ -12,8 +12,8 @@ class Data:
         fourLetterNouns = ["will", "call", "your", "good", "want", "door", "back", "tour", "know", "text", "take", "live", "post", "show"]
         fourLetterVerbs = ["pace", "text", "back", "time", "know", "want", "have", "live", "post", "show", "call"]
         fourLetterWords = ["that", "with", "have", "this", "from", "they", "been", "much", "some", "time", "text",
-                           "most", "also", "four", "five", "been", "were", "east", "west", "free", "area", "keep", "kept",
-                           "onto", "upon", "then", "them", "over", "here"]
+                           "most", "also", "four", "five", "were", "east", "west", "free", "area", "keep", "kept",
+                           "onto", "upon", "when", "then", "them", "over", "here", "both", "pass", "word"]
         fiveLetterNouns = ["attack", "crypt", "place", "piece", "front", "device", "arrear", "design"]
         fiveLetterVerbs = ["attack", "crypt", "place", "piece", "front"]
         fiveLetterWords = ["attack", "crypt", "three", "place", "peace", "piece" "front", "found", "north", "south",
@@ -21,6 +21,8 @@ class Data:
 
         sixPlusLetterWords = ["across", "access", "receive", "recover", "realise", "realize", "public", "private",
                               "object", "within", "without", "require"]
+        sixPlusLetterNouns = ["receive", "recover", "realise", "realize", "public", "private", "object", "require"]
+        sixPlusLetterVerbs = ["access", "receive", "recover", "realise", "realize", "object", "require"]
 
         self.alphabet = "abcdefghijklmnopqrstuvwxyz"
         self.letters_by_freq = ['e', 't', 'a', 'o', 'i', 'n', 's', 'r', 'h', 'd', 'l', 'u', 'c', 'm', 'f', 'y', 'w',
@@ -34,6 +36,7 @@ class Data:
         self.words.append(self.create_pluralised_words(threeLetterNouns))
         self.words.append(self.create_past_verbs(threeLetterVerbs))
         self.words.append(self.create_present_verbs(threeLetterVerbs))
+        self.words.append(self.create_personable_verbs(threeLetterVerbs))
 
         self.words.append(fourLetterWords)
         self.words.append(fourLetterNouns)
@@ -41,14 +44,21 @@ class Data:
         self.words.append(self.create_pluralised_words(fourLetterNouns))
         self.words.append(self.create_past_verbs(fourLetterVerbs))
         self.words.append(self.create_present_verbs(fourLetterVerbs))
+        self.words.append(self.create_personable_verbs(fourLetterVerbs))
 
         self.words.append(fiveLetterWords)
         self.words.append(fiveLetterNouns)
         self.words.append(self.create_pluralised_words(fiveLetterNouns))
         self.words.append(self.create_past_verbs(fiveLetterVerbs))
         self.words.append(self.create_present_verbs(fiveLetterVerbs))
+        self.words.append(self.create_personable_verbs(fiveLetterVerbs))
 
         self.words.append(sixPlusLetterWords)
+        self.words.append(sixPlusLetterVerbs)
+        self.words.append(self.create_pluralised_words(sixPlusLetterNouns))
+        self.words.append(self.create_past_verbs(sixPlusLetterVerbs))
+        self.words.append(self.create_present_verbs(sixPlusLetterVerbs))
+        self.words.append(self.create_personable_verbs(sixPlusLetterVerbs))
 
         self.punctuation = "./,';:()!?\\-+{}"
 
@@ -75,3 +85,13 @@ class Data:
             else:
                 words.append("{}{}".format(word, 'ed'))
         return words
+
+    def create_personable_verbs(self, word_list):
+        words = []
+        for word in word_list:
+            if word[-1] == 'e':
+                words.append("{}{}".format(word, 'r'))
+            else:
+                words.append("{}{}".format(word, 'er'))
+        return words
+
