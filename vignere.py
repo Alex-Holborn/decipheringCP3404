@@ -12,11 +12,14 @@ class Vignere:
                 for d in dist:
                     if d not in self.dists and d % 2 == 0:
                         self.dists.append(d)
-                # print("{} -> {} -> {}".format(t, self.get_indexes_of_repeating_trigraph(t), dist))
         print("distances : {}".format(self.dists))
         self.factors = self.get_common_factors(self.dists)
         self.highest_factor = self.get_highest_factor(self.factors)
-        self.arrange_cipher_by_highest_factor()
+        self.cipher_lines = self.arrange_cipher_by_highest_factor() # An array of arrays, with cipher formed into words of len(highest factor)
+        self.char_freq = self.get_char_freq_distribution()
+        for d in self.char_freq:
+            print(d)
+        self.recover_keyword(self.char_freq)
 
     def get_trigraphs(self):
         # returns all trigraphs (groups of 3 characters) in cipher as keys and amount they appear as values
@@ -68,6 +71,8 @@ class Vignere:
         return i
 
     def arrange_cipher_by_highest_factor(self):
+        lines = []
+        line = []
         s = ""
         word = ""
         number_per_line = 10
@@ -75,14 +80,60 @@ class Vignere:
         for i, c in enumerate(self.cipher):
             word += self.cipher[i]
             if i != 0 and len(word) == self.highest_factor:
+                line.append(word)
                 s += word
                 s += " "
                 word = ""
                 amt += 1
                 if amt == number_per_line:
+                    lines.append(line)
+                    line = []
                     amt = 0
                     print(s)
                     s = ""
         print(s)
+        return lines
+
+    def get_char_freq_distribution(self):
+        words = []
+        for line in self.cipher_lines:
+            for word in line:
+                words.append(word)
+        dicts = [] # we need a dictionary for each letter in the key word
+        for i in range(0, self.highest_factor):
+            d = {}
+            dicts.append(d)
+        for word in words:
+            for i in range(0, self.highest_factor):
+                if word[i] in dicts[i].keys():
+                    dicts[i][word[i]] += 1
+                else:
+                    dicts[i][word[i]] = 1
+        return dicts
+
+
+    def get_letter_by_letter_steps(self, letter, letter_step):
+        # takes a letter and shifts backwards by the value given from character letter_step
+        vals = {}
+        alph = "abcdefghijklmnopqrstuvwxyz"
+        for i, c in enumerate(alph):
+            vals[c] = i
+        decrement = vals[letter_step]
+        val = (vals[letter] - decrement) % len(alph)
+        for k in vals.keys():
+            if vals[k] == val:
+                return k
+        return None
+
+    def recover_keyword(self, dicts):
+        for d in dicts:
+            greatest = ""
+            for k in d.keys():
+                if greatest == "":
+                    greatest = k
+                else:
+                    if d[k] > d[greatest]:
+                        greatest = k
+            print("{} -> {} -> {}".format(greatest, self.get_letter_by_letter_steps(greatest, 'e'), self.get_letter_by_letter_steps(greatest, 't')))
 
 v = Vignere("pgbuwtelpmtgbcoptgrnszvkruvnbkdhqcwvdwpwakhbphbqelpemeivjolggmgcwopwpczwenbfkvxiopmtpgbwqexivdiwrnjzvgtlntojicoqtwthdpbjtuvnbkdhqcwetyetvihcolucchfcqpriodquiyoeekibusmcjwutwpgompahdlfiioeffepgpodeqqcyfcukvbunpqdmfewdaidvjksmjyaggnglsgqcedavtumaiabyoeargigttgqceomthiqpvutumpldxxtazkdluzbjtqjyvggxfemtbcolbkdhqsiutislecgxusmkiynewudgfzvgdnipzvwuoepgayhtbkbuupekchfcnwgnipzodlfepggynlggmctekqafvdqqcvfeegthusmcjwutwptyslvfhinpwhibfmqfsysdakbcmlzvdmittnxhhtvithfcinpfmdkjtgfdkccvfntchmjqqgsudnwtscorbqwixepgnxfltyxniepkhjszjntgxppckyjompicgtmfibfqwnaixtviilvdbodxfwacjwutwptysezwhnusquxmusmgpmjpavpheepgbitecppwdpxvpvmpaqaoutwpibfepgelpmtgbcoqieinipejdffazqqffxavtgtqzqbqipbjtlusmcjwutwptysswptmuwghdfmzeuibfazqiidztqghpeiuhontviibbebjtuvnbkdhfpzkhuuccuiqpcbjnbphmxtltztxtmnlvagympdccnqcwdayndmihydfzkisbywpngjeggiwusquxmxsgcaffiquicorqpiysymvpodeqqcmjemuuomwgvgotebjtuvnbkdhfpz")
