@@ -12,6 +12,7 @@ class Vignere:
                     if d not in self.dists and d % 2 == 0:
                         self.dists.append(d)
         print("distances : {}".format(self.dists))
+        print("common factors: {}".format(self.get_common_factors(self.dists)))
         self.factors = self.get_common_factors(self.dists)
         self.highest_factor = self.get_highest_factor(self.factors)
         self.cipher_lines = self.arrange_cipher_by_highest_factor() # An array of arrays, with cipher formed into words of len(highest factor)
