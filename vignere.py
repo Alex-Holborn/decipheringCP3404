@@ -1,6 +1,6 @@
 class Vignere:
 
-    def __init__(self, cipher, keyword):
+    def __init__(self, keyword, cipher):
         self.cipher = cipher
         self.trigraphs = self.get_trigraphs()
         print(self.cipher)
@@ -13,7 +13,6 @@ class Vignere:
                         self.dists.append(d)
         print("distances : {}".format(self.dists))
         print("highest common factor: {}".format(self.get_highest_common_factor(self.dists)))
-       # self.factors = self.get_highest_common_factor(self.dists)
         self.highest_factor = self.get_highest_common_factor(self.dists)
         self.cipher_lines = self.arrange_cipher_by_highest_factor() # An array of arrays, with cipher formed into words of len(highest factor)
         self.chunks = []
@@ -27,7 +26,7 @@ class Vignere:
         print(self.recover_plaintext(keyword)) # Ideally I would like to automatically recover the keyword but it is outside the necessary scope for this assignment
 
     def get_trigraphs(self):
-        # returns all trigraphs (groups of 3 characters) in cipher as keys and amount they appear as values
+        # returns all trigraphs (groups of 3 characters) in cipher as keys and frequency of appearance as values
         trigraphs = {}
         for i in range(0, len(self.cipher)):
             if i + 2 <= len(self.cipher):
@@ -56,7 +55,7 @@ class Vignere:
                 dists.append(indexes[i] - indexes[i-1])
         return dists
 
-    def get_highest_common_factor(self, numbers):
+    def get_highest_common_factor(self, numbers, debug_display=True):
         # counts the frequency of factors and takes the most popular across the distances
         # Doesn't return strictly THE highest factor but the most popular highest factor across the entire array
         count = {}
@@ -66,7 +65,8 @@ class Vignere:
                     count[f] = 1
                 else:
                     count[f] += 1
-        print(count)
+        if debug_display:
+            print(count)
         highest = 0
         for k in count.keys():
             if highest == 0:
@@ -80,7 +80,8 @@ class Vignere:
                         highest = k
         return highest
 
-    def arrange_cipher_by_highest_factor(self):
+    def arrange_cipher_by_highest_factor(self, debug_display=True):
+        # separates the cipher into chunks equal in length to the highest factor determined earlier
         lines = []
         line = []
         s = ""
@@ -99,13 +100,17 @@ class Vignere:
                     lines.append(line)
                     line = []
                     amt = 0
-                    print(s)
+                    if debug_display:
+                        print(s)
                     s = ""
-        print(s)
+        if debug_display:
+            print(s)
         return lines
 
     def get_char_freq_distribution(self):
-        dicts = []  # we need a dictionary for each letter in the key word
+        # creates n dictionaries where n is the length of the keyword
+        # analyses frequency of each character within it's respective position
+        dicts = [] 
         for i in range(0, self.highest_factor):
             d = {}
             dicts.append(d)
@@ -132,6 +137,8 @@ class Vignere:
         return None
 
     def analyse_keyword(self, dicts):
+        # Takes the most common letter in each dictionary and assumes it is an e - displays the letter 5 steps behind it
+        # Then does the same and assumes it is a t
         for d in dicts:
             greatest = ""
             for k in d.keys():
@@ -144,6 +151,8 @@ class Vignere:
 
     def recover_plaintext(self, key):
         # at this point words and key are same length so it is just simple iterations
+        # Takes each chunk and shifts each letter back with respect to the letter in the same position in the key
+        # Smooshes (that's a technical term) them all together and returns a whole string
         text = []
         for chunk in self.chunks:
             s = ""
@@ -157,6 +166,7 @@ class Vignere:
         return t
 
     def factorise_number(self, number):
+        # returns each factor that is greater than 2 of a number
         factors = []
         for i in range(3, number + 1):
             if number % i == 0:
@@ -164,12 +174,12 @@ class Vignere:
         return factors
 
 
-v = Vignere("pgbuwtelpmtgbcoptgrnszvkruvnbkdhqcwvdwpwakhbphbqelpemeivjolggmgcwopwpczwenbfkvxiopmtpgbwqexivdiwrnjzvgtlntojicoqtwthdpbjtuvnbkdhqcwetyetvihcolucchfcqpriodquiyoeekibusmcjwutwpgompahdlfiioeffepgpodeqqcyfcukvbunpqdmfewdaidvjksmjyaggnglsgqcedavtumaiabyoeargigttgqceomthiqpvutumpldxxtazkdluzbjtqjyvggxfemtbcolbkdhqsiutislecgxusmkiynewudgfzvgdnipzvwuoepgayhtbkbuupekchfcnwgnipzodlfepggynlggmctekqafvdqqcvfeegthusmcjwutwptyslvfhinpwhibfmqfsysdakbcmlzvdmittnxhhtvithfcinpfmdkjtgfdkccvfntchmjqqgsudnwtscorbqwixepgnxfltyxniepkhjszjntgxppckyjompicgtmfibfqwnaixtviilvdbodxfwacjwutwptysezwhnusquxmusmgpmjpavpheepgbitecppwdpxvpvmpaqaoutwpibfepgelpmtgbcoqieinipejdffazqqffxavtgtqzqbqipbjtlusmcjwutwptysswptmuwghdfmzeuibfazqiidztqghpeiuhontviibbebjtuvnbkdhfpzkhuuccuiqpcbjnbphmxtltztxtmnlvagympdccnqcwdayndmihydfzkisbywpngjeggiwusquxmxsgcaffiquicorqpiysymvpodeqqcmjemuuomwgvgotebjtuvnbkdhfpz", "public")
+v = Vignere("public", "pgbuwtelpmtgbcoptgrnszvkruvnbkdhqcwvdwpwakhbphbqelpemeivjolggmgcwopwpczwenbfkvxiopmtpgbwqexivdiwrnjzvgtlntojicoqtwthdpbjtuvnbkdhqcwetyetvihcolucchfcqpriodquiyoeekibusmcjwutwpgompahdlfiioeffepgpodeqqcyfcukvbunpqdmfewdaidvjksmjyaggnglsgqcedavtumaiabyoeargigttgqceomthiqpvutumpldxxtazkdluzbjtqjyvggxfemtbcolbkdhqsiutislecgxusmkiynewudgfzvgdnipzvwuoepgayhtbkbuupekchfcnwgnipzodlfepggynlggmctekqafvdqqcvfeegthusmcjwutwptyslvfhinpwhibfmqfsysdakbcmlzvdmittnxhhtvithfcinpfmdkjtgfdkccvfntchmjqqgsudnwtscorbqwixepgnxfltyxniepkhjszjntgxppckyjompicgtmfibfqwnaixtviilvdbodxfwacjwutwptysezwhnusquxmusmgpmjpavpheepgbitecppwdpxvpvmpaqaoutwpibfepgelpmtgbcoqieinipejdffazqqffxavtgtqzqbqipbjtlusmcjwutwptysswptmuwghdfmzeuibfazqiidztqghpeiuhontviibbebjtuvnbkdhfpzkhuuccuiqpcbjnbphmxtltztxtmnlvagympdccnqcwdayndmihydfzkisbywpngjeggiwusquxmxsgcaffiquicorqpiysymvpodeqqcmjemuuomwgvgotebjtuvnbkdhfpz")
 
 # further ciphers for checking the algorithm, first I passed these with no keyword to analyse and then appended the keyword manually
 # key: timeout
-#w = Vignere("bvsibykttovmjmhodedbbvsqcgukxvaxchxmqyigyvkmfwohwmpqcaolmjqosjmlmovsntgldiimxwumrmnbfmelshvxbtihlboqmpwgiemyibntmqarcztlwomsnrhzuibnxwkdcdnhzzmtvcvlgexsgpaqolfyjnqdignaxkarqumxvmxwighnmwswkxbelolbgoegvyfxeuxvmbgoxiimxkkdcdnhzzmtvsblceyoferczeqwxibmfzytlizeinahzuwsxlxbajdukmqomdugmayygnybzexfyvhdqvhbxvzkthizkiblwwdxgilwwavwytfifbaqwhbxlgexsgbwmmpzshgmisifwkmcywlxvwxpovhkifmbaitzfmqcitvfwhitixxchbxbzelolxlizhdykywdqhbxkmcywlxwkdcdnhzzmtvcvmzmrgzhkumxwigtbflsmtfmfmaymameifylntfwoflhkmpzywiidxwuekmeyznltzqxvyglmzxhimamosavbgmdavivttoyzumxaflszbgixvsmnebzshymaifmbmhfmesqcxmgavwygmmpgfsimwsvojabkecgnxfaoscjxkifmbaitzfmqcitvfwtcklbzisxmhibtzstyczghchgwzxvybkatefyltvptfiwnkqxvybkuahwzbxlelolxlbtibolxbtiaiwbnuirmatzqwhizxvqvonxiidxwuekmeyznllqzgsakhcbwqugxftmpcmwqrjslxgbexfovmcdigugwzugvykkmxehchgamqchziidxwwbiizxgcfitqqshmtbusbmhyaggvmxkdugsmuxkaqsghkmosajexfrsfakhcbwhbtgnavwhwbduhiuelqfmgqhkbtqshmbwzmbamaifezghlbmpzcfitqqshmtbusbmhyaagwymrwdmshmxlovmjmhodedbbvakwhyflidipulxlardoueqoossvkgbxcmrlbqqgmnvpmwhbxkamxvyxeomqofhkbtircyyqqlsfefiztivebkwimxblbdmpombwzwmmmxuflslxaiefsyggwmxhyfibfspulxbtvsmahtpgfsimwsvojabkmpuikbbtqgiglgyqsnkbkovmjmhakwhyfltuosxxleqspmxkdqxkikxiesbmyhzflwmfhafilclmqzkwgiemyibntmqargiylwomsnrhzuibnxwkdcdnhzzmtvcvlgexsgltzqfomxwwzxvyvhvoidnhyitsaifhzblwwlxkdihmatzurumvamyihbxfiflsgtmqoezmmkcoxilxhnflsjnutugyyrvzkthilrafiamtkmmhskntbqvsatklurunaxpaqcghkxtmqjkhxqvhsunbflshhgtursukbbktfiixzfcczmambvwptmmwimwkrxfsgslmmywrixlvaxofehepitcgbbusbiylcolobhfwysfjabayeznahcslhbxgmoigmbmgajhbxawysaikipuwajkhxqvhsmhqytzyfxvfegivbmfcclbxvfirwkrxfsultipuggslmmylomghbnishikwhirmrfuqxfcvvzkthilrafiamtkmzshmnbbmfzyyhzflwminzbsgytlagqsnatbmfohdpqelsmmhceiomrfuqxfcvvzkthilrafiavtlmpxvlxlpaprmrlbqqwhhklqvhivhuyybcvtbqawnavcexcgxkauxaolmxawgyllaqtoltmmovmjmhodedbbvsqcgwhkzqwdigwqzkhiwbnrifygmkgwhifxzeshbxkeuwswnlbaqsllvizvsuwmpqqsmltoqwqiffczmqumxlnihqxxvflsvtgsmrrimamdgimmhuqvg", "timeout")
+#w = Vignere("timeout", "bvsibykttovmjmhodedbbvsqcgukxvaxchxmqyigyvkmfwohwmpqcaolmjqosjmlmovsntgldiimxwumrmnbfmelshvxbtihlboqmpwgiemyibntmqarcztlwomsnrhzuibnxwkdcdnhzzmtvcvlgexsgpaqolfyjnqdignaxkarqumxvmxwighnmwswkxbelolbgoegvyfxeuxvmbgoxiimxkkdcdnhzzmtvsblceyoferczeqwxibmfzytlizeinahzuwsxlxbajdukmqomdugmayygnybzexfyvhdqvhbxvzkthizkiblwwdxgilwwavwytfifbaqwhbxlgexsgbwmmpzshgmisifwkmcywlxvwxpovhkifmbaitzfmqcitvfwhitixxchbxbzelolxlizhdykywdqhbxkmcywlxwkdcdnhzzmtvcvmzmrgzhkumxwigtbflsmtfmfmaymameifylntfwoflhkmpzywiidxwuekmeyznltzqxvyglmzxhimamosavbgmdavivttoyzumxaflszbgixvsmnebzshymaifmbmhfmesqcxmgavwygmmpgfsimwsvojabkecgnxfaoscjxkifmbaitzfmqcitvfwtcklbzisxmhibtzstyczghchgwzxvybkatefyltvptfiwnkqxvybkuahwzbxlelolxlbtibolxbtiaiwbnuirmatzqwhizxvqvonxiidxwuekmeyznllqzgsakhcbwqugxftmpcmwqrjslxgbexfovmcdigugwzugvykkmxehchgamqchziidxwwbiizxgcfitqqshmtbusbmhyaggvmxkdugsmuxkaqsghkmosajexfrsfakhcbwhbtgnavwhwbduhiuelqfmgqhkbtqshmbwzmbamaifezghlbmpzcfitqqshmtbusbmhyaagwymrwdmshmxlovmjmhodedbbvakwhyflidipulxlardoueqoossvkgbxcmrlbqqgmnvpmwhbxkamxvyxeomqofhkbtircyyqqlsfefiztivebkwimxblbdmpombwzwmmmxuflslxaiefsyggwmxhyfibfspulxbtvsmahtpgfsimwsvojabkmpuikbbtqgiglgyqsnkbkovmjmhakwhyfltuosxxleqspmxkdqxkikxiesbmyhzflwmfhafilclmqzkwgiemyibntmqargiylwomsnrhzuibnxwkdcdnhzzmtvcvlgexsgltzqfomxwwzxvyvhvoidnhyitsaifhzblwwlxkdihmatzurumvamyihbxfiflsgtmqoezmmkcoxilxhnflsjnutugyyrvzkthilrafiamtkmmhskntbqvsatklurunaxpaqcghkxtmqjkhxqvhsunbflshhgtursukbbktfiixzfcczmambvwptmmwimwkrxfsgslmmywrixlvaxofehepitcgbbusbiylcolobhfwysfjabayeznahcslhbxgmoigmbmgajhbxawysaikipuwajkhxqvhsmhqytzyfxvfegivbmfcclbxvfirwkrxfsultipuggslmmylomghbnishikwhirmrfuqxfcvvzkthilrafiamtkmzshmnbbmfzyyhzflwminzbsgytlagqsnatbmfohdpqelsmmhceiomrfuqxfcvvzkthilrafiavtlmpxvlxlpaprmrlbqqwhhklqvhivhuyybcvtbqawnavcexcgxkauxaolmxawgyllaqtoltmmovmjmhodedbbvsqcgwhkzqwdigwqzkhiwbnrifygmkgwhifxzeshbxkeuwswnlbaqsllvizvsuwmpqqsmltoqwqiffczmqumxlnihqxxvflsvtgsmrrimamdgimmhuqvg")
 # key: market
-#x = Vignere("mpisztfebocvdygdslkskoqxzasvilfwfzekfivcxaqsvxhxdaenxaqrvmibheidsvamderboakomgeetbivkvzkegunjogndetregzecliyarvkrroodwygucrdmhzowwileaxowmmkvctemcvlsmttyowxzdvbegprvmibheiwylfeomltzgvdlxeetbimwepfmtmsvmykqcykrgqlkrilqclbivtaexieoaelibypcoqxztvnylunxkqxesvxkxdoikvxsijdikqddkmemfkovxjcykrzunxdlxwepdlxeeenikoaecieqckkqxesrqitbpcixaqeemvrbtzyrtxgfbmmtmrxhwusgkxvttyogkkpkykkmmkrvhggydlxunjogndetregzecdlxdetomoqrnrsdzoncxaqsvmvxfkviokqcioemqskrifqsjkkxrrfwxaqciitmagikqbzpisztfebocvdygdslkskoqlnokrigorpzxbanrxhwqciitmuoeuireaiowxorvdegpezdlxdtyowtyefbxaqkeyaeqdxosyanvyjmtedswlgfwsgbqnkdswqtvbqbzekrihfhvbxauszcaakpisztfebocvdygdslkskoqlmrvkplacrvpxpspwqxfrzmjhdeokqixeuowwqciitmuoeswbpeedmvmlkyhxeeemvrbtzyrugtkridqyjmlxpucomldemovlqdkrifmienvtibrmohragzprunxktkuvrdidqytbcifojiwmqmzcxamtzdvxcuzbilfhvzvbartyqfgnzmemuoeyjmtebocdnekgixzsvxhxdaenvxoezfikgszxkteetevxohrxrxxbvpskqaeigkkpkykkmmzcxkmnjwmmfeudlxudvkfxtieneigbcsgdqytbcifojiwmqmjswmtaksxfugydfxbojcmuxekyhxeixxelkskoqmtakewxetnyhbrfvbigfkviwyarvxgkkpkssgmnunivdygdmhztyoogawcohzqowyrxafkrilqkviwaawvfikyujdrhfbvcyyritsigfcfwtnfakssgmlcixhpekovfunvdlxatyovaqntosgqowdlxwepcgtzbvwewqpllpbobpzyuxijrmgsiksrtpiiogmarpdltfijglxdekrimqrdzyuxituiroodowydoddlxmdmkrmmgvyjtbusvmvwepmvrbtfcclfedswmtaksjmtevxgkkpkssgwepswfmdvzyuxitdlxzaeisgqcrxylqtyotnnlzmoxktfcigpaeorvdygdiwyejcezqwzdlhgtrzvbartyqfgnzmemuoeyjmtefdlxdkvixaqonxikafkrilqcioxdqyzcxaqoevciqrjyrmtakmegpetbciftyogkkpkykkmmlcmgstyowxorvdoxkacdlhggyktixyzxktbusvmvwepmvrbtfcclfednsxenfdvxcuzbiidifbghymlxmvmtzyrmatikrlyikkwxorvdoxkbvdaxqnkgsimrksilafkrilkskoqmteioqnetsoemdujdiwbusvmvdexswmdynrmmqprqilfhrdoxqpjkrnbtfnemqlzcxhracvevfimotnnlzmoxkspcxxysrxigfrpyrmtecswmtajdsbzccehxfhvxefqowdlxdetomoqrjkphzgnsxafhvsvhdixsrtxpllpbokviwmteckgdafrbizuskbctxlfgwtzakdevweisrlfernsynrvkobzgkriigbcsgdqytbcifojiwmqmkywxfugrmlawecclfedkrwfrpdsvanmsrvqsvxhxdskremfhvcclfedswlamvyrxqljowmtijswvmlcohfmsheikmdzxktftrmomteeyxbanfptnnlzmoxkciitmagiktakwrcmgfrfnyvqdsihbrfzoegphvvpfmnkrirpijmyleeudlxehfbxvamzxklafgbmomtvuirorpzxheyjdifeaenmgfrfnyvqdkgsgavvveibrfkgaqstkpeqdgefeucbocvdygdslkskoqlmnuzyuxituirpijdvbnukssgeyjdifetfcseheioptfeuzvhnlvww", "market")
+#x = Vignere("market", "mpisztfebocvdygdslkskoqxzasvilfwfzekfivcxaqsvxhxdaenxaqrvmibheidsvamderboakomgeetbivkvzkegunjogndetregzecliyarvkrroodwygucrdmhzowwileaxowmmkvctemcvlsmttyowxzdvbegprvmibheiwylfeomltzgvdlxeetbimwepfmtmsvmykqcykrgqlkrilqclbivtaexieoaelibypcoqxztvnylunxkqxesvxkxdoikvxsijdikqddkmemfkovxjcykrzunxdlxwepdlxeeenikoaecieqckkqxesrqitbpcixaqeemvrbtzyrtxgfbmmtmrxhwusgkxvttyogkkpkykkmmkrvhggydlxunjogndetregzecdlxdetomoqrnrsdzoncxaqsvmvxfkviokqcioemqskrifqsjkkxrrfwxaqciitmagikqbzpisztfebocvdygdslkskoqlnokrigorpzxbanrxhwqciitmuoeuireaiowxorvdegpezdlxdtyowtyefbxaqkeyaeqdxosyanvyjmtedswlgfwsgbqnkdswqtvbqbzekrihfhvbxauszcaakpisztfebocvdygdslkskoqlmrvkplacrvpxpspwqxfrzmjhdeokqixeuowwqciitmuoeswbpeedmvmlkyhxeeemvrbtzyrugtkridqyjmlxpucomldemovlqdkrifmienvtibrmohragzprunxktkuvrdidqytbcifojiwmqmzcxamtzdvxcuzbilfhvzvbartyqfgnzmemuoeyjmtebocdnekgixzsvxhxdaenvxoezfikgszxkteetevxohrxrxxbvpskqaeigkkpkykkmmzcxkmnjwmmfeudlxudvkfxtieneigbcsgdqytbcifojiwmqmjswmtaksxfugydfxbojcmuxekyhxeixxelkskoqmtakewxetnyhbrfvbigfkviwyarvxgkkpkssgmnunivdygdmhztyoogawcohzqowyrxafkrilqkviwaawvfikyujdrhfbvcyyritsigfcfwtnfakssgmlcixhpekovfunvdlxatyovaqntosgqowdlxwepcgtzbvwewqpllpbobpzyuxijrmgsiksrtpiiogmarpdltfijglxdekrimqrdzyuxituiroodowydoddlxmdmkrmmgvyjtbusvmvwepmvrbtfcclfedswmtaksjmtevxgkkpkssgwepswfmdvzyuxitdlxzaeisgqcrxylqtyotnnlzmoxktfcigpaeorvdygdiwyejcezqwzdlhgtrzvbartyqfgnzmemuoeyjmtefdlxdkvixaqonxikafkrilqcioxdqyzcxaqoevciqrjyrmtakmegpetbciftyogkkpkykkmmlcmgstyowxorvdoxkacdlhggyktixyzxktbusvmvwepmvrbtfcclfednsxenfdvxcuzbiidifbghymlxmvmtzyrmatikrlyikkwxorvdoxkbvdaxqnkgsimrksilafkrilkskoqmteioqnetsoemdujdiwbusvmvdexswmdynrmmqprqilfhrdoxqpjkrnbtfnemqlzcxhracvevfimotnnlzmoxkspcxxysrxigfrpyrmtecswmtajdsbzccehxfhvxefqowdlxdetomoqrjkphzgnsxafhvsvhdixsrtxpllpbokviwmteckgdafrbizuskbctxlfgwtzakdevweisrlfernsynrvkobzgkriigbcsgdqytbcifojiwmqmkywxfugrmlawecclfedkrwfrpdsvanmsrvqsvxhxdskremfhvcclfedswlamvyrxqljowmtijswvmlcohfmsheikmdzxktftrmomteeyxbanfptnnlzmoxkciitmagiktakwrcmgfrfnyvqdsihbrfzoegphvvpfmnkrirpijmyleeudlxehfbxvamzxklafgbmomtvuirorpzxheyjdifeaenmgfrfnyvqdkgsgavvveibrfkgaqstkpeqdgefeucbocvdygdslkskoqlmnuzyuxituirpijdvbnukssgeyjdifetfcseheioptfeuzvhnlvww")
 # key: predict
-#z = Vignere("pjwhauftexrnclttvhbuapimqouvwvqhbqthjivavathydtkmnfjdagvgvxvpckxekvkjxbvxzwmbcuwrnoxpjyumutgvyvmflttyuqvrbvevctxhrrgmhyxtmhverdeivagvjimwgvatjifctbipqhiungvgdvdxtotumultufbbjxclqemthuzrwmnexxiqbintjwhavapkeqcptjklrzkltuwhbyhjchkixxifqdsgbcfvgmtmdyeymczjrvdvvxtfjgmvxgdmqqpziyivmektkxzwvrevwrnuxrlvlbaapmiemggszwfcultumqbjxazxhzcmjiirnuxriiwajtgzrjaeatdivagvgvxvpckxekvkjxbvwzqvajegrvfbizsqinlttyuqvriymvugtcjxkivmwvwhkwkxkcrnvatjcvbgfxjmqlgitehhvvhuklhbkftrrgzgldlvfmutkrmoidetksdvahegsqmpmlyslavknzrjbqbckiungktnmwpvatgvrkgwjiivmektkwkitbcxwfpgftnmwpehcumwqqgpcwhkwkxkcwpklbveqavapkxkmuxrlvlbahuklhaalivqumnbtjsqbjxszjiqenakcrnehbgywqpzhfqhlkyuzgxtvigffomolifwwcfrdehlnhbrlpwxthqcipauxtrwhktxijldzkgvjgkmoxxjthzhxrkmibjxeiseidbazxbwhtclrdcvadimvmfltksixckizglxcgijfhqpzpsphbqwtkiuukgtklhagvgvxlaphqvxwmtmwrrwpcmdweqwwmhzhhzcgsklhzgydiilaphqvxwmtmwrrjcglhzrjbjxhvgumvmwvfdakvifsoqplilhbqpzhvgumerxjxkmphizsqwhxckvrxatrfrfmrmxexuwfnrvheguaperrvggiissgetcsiwpqnvyxrnclpdewpgfpkmfinftrwxzghuzriwtfpkmrvqkjeghzvtxexbipwxjgrurnivhdacyjegwqqgdweszqupsmoqvrszwwzkujkmrvnxirvdvfhbmeuqcuavowimxdeeiqpbivwhbqykrpxmutrtsulkgvksdxthqrfltkmnumvbtbqlxlwpigffnbjxjeghzvtxexbidhjkxkmkgufvpivbdekdqpxsscdvgotexzpkvwkenmuiarghievdihlvimdumvbtbqlxlwpigffnquvpcphlvatvrwzqinfjnipwxjhhvqmtufbpmmwvjrzotauiiqpbizsqwhxckvrxabhrwiwnednwvcridjinqutgrrgwoopimdjnxlymfpvtzvwrvcyxemwmuxifjyinntjefkqkszrjbqteiseidbazxblkliimecvbdetuwddiyiqbjxtexuwrrdwxkquigffdjkexkcgqumgzfxbkhczwgmhbcvhegvatwsotqpxekiwtfjce", "predict")
+#z = Vignere("predict", "pjwhauftexrnclttvhbuapimqouvwvqhbqthjivavathydtkmnfjdagvgvxvpckxekvkjxbvxzwmbcuwrnoxpjyumutgvyvmflttyuqvrbvevctxhrrgmhyxtmhverdeivagvjimwgvatjifctbipqhiungvgdvdxtotumultufbbjxclqemthuzrwmnexxiqbintjwhavapkeqcptjklrzkltuwhbyhjchkixxifqdsgbcfvgmtmdyeymczjrvdvvxtfjgmvxgdmqqpziyivmektkxzwvrevwrnuxrlvlbaapmiemggszwfcultumqbjxazxhzcmjiirnuxriiwajtgzrjaeatdivagvgvxvpckxekvkjxbvwzqvajegrvfbizsqinlttyuqvriymvugtcjxkivmwvwhkwkxkcrnvatjcvbgfxjmqlgitehhvvhuklhbkftrrgzgldlvfmutkrmoidetksdvahegsqmpmlyslavknzrjbqbckiungktnmwpvatgvrkgwjiivmektkwkitbcxwfpgftnmwpehcumwqqgpcwhkwkxkcwpklbveqavapkxkmuxrlvlbahuklhaalivqumnbtjsqbjxszjiqenakcrnehbgywqpzhfqhlkyuzgxtvigffomolifwwcfrdehlnhbrlpwxthqcipauxtrwhktxijldzkgvjgkmoxxjthzhxrkmibjxeiseidbazxbwhtclrdcvadimvmfltksixckizglxcgijfhqpzpsphbqwtkiuukgtklhagvgvxlaphqvxwmtmwrrwpcmdweqwwmhzhhzcgsklhzgydiilaphqvxwmtmwrrjcglhzrjbjxhvgumvmwvfdakvifsoqplilhbqpzhvgumerxjxkmphizsqwhxckvrxatrfrfmrmxexuwfnrvheguaperrvggiissgetcsiwpqnvyxrnclpdewpgfpkmfinftrwxzghuzriwtfpkmrvqkjeghzvtxexbipwxjgrurnivhdacyjegwqqgdweszqupsmoqvrszwwzkujkmrvnxirvdvfhbmeuqcuavowimxdeeiqpbivwhbqykrpxmutrtsulkgvksdxthqrfltkmnumvbtbqlxlwpigffnbjxjeghzvtxexbidhjkxkmkgufvpivbdekdqpxsscdvgotexzpkvwkenmuiarghievdihlvimdumvbtbqlxlwpigffnquvpcphlvatvrwzqinfjnipwxjhhvqmtufbpmmwvjrzotauiiqpbizsqwhxckvrxabhrwiwnednwvcridjinqutgrrgwoopimdjnxlymfpvtzvwrvcyxemwmuxifjyinntjefkqkszrjbqteiseidbazxblkliimecvbdetuwddiyiqbjxtexuwrrdwxkquigffdjkexkcgqumgzfxbkhczwgmhbcvhegvatwsotqpxekiwtfjce")
