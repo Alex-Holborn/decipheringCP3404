@@ -12,9 +12,9 @@ class Vignere:
                     if d not in self.dists and d % 2 == 0:
                         self.dists.append(d)
         print("distances : {}".format(self.dists))
-        print("common factors: {}".format(self.get_common_factors(self.dists)))
-        self.factors = self.get_common_factors(self.dists)
-        self.highest_factor = self.get_highest_factor(self.factors)
+        print("highest common factor: {}".format(self.get_highest_common_factor(self.dists)))
+       # self.factors = self.get_highest_common_factor(self.dists)
+        self.highest_factor = self.get_highest_common_factor(self.dists)
         self.cipher_lines = self.arrange_cipher_by_highest_factor() # An array of arrays, with cipher formed into words of len(highest factor)
         self.chunks = []
         for line in self.cipher_lines:
@@ -56,24 +56,24 @@ class Vignere:
                 dists.append(indexes[i] - indexes[i-1])
         return dists
 
-    def get_common_factors(self, numbers):
-        factors = []
-        for i in range(2, 12):
-            for n in numbers:
-                if n % i == 0:
-                    if i not in factors:
-                        factors.append(i)
+    def get_highest_common_factor(self, numbers):
+        # counts the frequency of factors and takes the most popular across the distances
+        # Doesn't return strictly THE highest factor but the most popular highest factor across the entire array
+        count = {}
+        for n in numbers:
+            for f in self.factorise_number(n):
+                if f not in count.keys():
+                    count[f] = 1
                 else:
-                    if i in factors:
-                        factors.remove(i)
-        return factors
-
-    def get_highest_factor(self, factors):
-        i = 0
-        for f in factors:
-            if f > i:
-                i = f
-        return i
+                    count[f] += 1
+        highest = 0
+        for k in count.keys():
+            if highest == 0:
+                highest = k
+            else:
+                if count[k] >= count[highest]:
+                    highest = k
+        return highest
 
     def arrange_cipher_by_highest_factor(self):
         lines = []
@@ -100,7 +100,7 @@ class Vignere:
         return lines
 
     def get_char_freq_distribution(self):
-        dicts = [] # we need a dictionary for each letter in the key word
+        dicts = []  # we need a dictionary for each letter in the key word
         for i in range(0, self.highest_factor):
             d = {}
             dicts.append(d)
@@ -150,6 +150,13 @@ class Vignere:
         for _t in text:
             t += _t
         return t
+
+    def factorise_number(self, number):
+        factors = []
+        for i in range(3, number + 1):
+            if number % i == 0:
+                factors.append(i)
+        return factors
 
 
 v = Vignere("pgbuwtelpmtgbcoptgrnszvkruvnbkdhqcwvdwpwakhbphbqelpemeivjolggmgcwopwpczwenbfkvxiopmtpgbwqexivdiwrnjzvgtlntojicoqtwthdpbjtuvnbkdhqcwetyetvihcolucchfcqpriodquiyoeekibusmcjwutwpgompahdlfiioeffepgpodeqqcyfcukvbunpqdmfewdaidvjksmjyaggnglsgqcedavtumaiabyoeargigttgqceomthiqpvutumpldxxtazkdluzbjtqjyvggxfemtbcolbkdhqsiutislecgxusmkiynewudgfzvgdnipzvwuoepgayhtbkbuupekchfcnwgnipzodlfepggynlggmctekqafvdqqcvfeegthusmcjwutwptyslvfhinpwhibfmqfsysdakbcmlzvdmittnxhhtvithfcinpfmdkjtgfdkccvfntchmjqqgsudnwtscorbqwixepgnxfltyxniepkhjszjntgxppckyjompicgtmfibfqwnaixtviilvdbodxfwacjwutwptysezwhnusquxmusmgpmjpavpheepgbitecppwdpxvpvmpaqaoutwpibfepgelpmtgbcoqieinipejdffazqqffxavtgtqzqbqipbjtlusmcjwutwptysswptmuwghdfmzeuibfazqiidztqghpeiuhontviibbebjtuvnbkdhfpzkhuuccuiqpcbjnbphmxtltztxtmnlvagympdccnqcwdayndmihydfzkisbywpngjeggiwusquxmxsgcaffiquicorqpiysymvpodeqqcmjemuuomwgvgotebjtuvnbkdhfpz")
