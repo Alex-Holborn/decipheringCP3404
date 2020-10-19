@@ -4,7 +4,6 @@ class Vignere:
         self.cipher = cipher
         self.trigraphs = self.get_trigraphs()
         print(self.cipher)
-        #print(self.trigraphs)
         self.dists = []
         for t in self.trigraphs.keys():
             if self.trigraphs[t] > 1:
@@ -16,10 +15,15 @@ class Vignere:
         self.factors = self.get_common_factors(self.dists)
         self.highest_factor = self.get_highest_factor(self.factors)
         self.cipher_lines = self.arrange_cipher_by_highest_factor() # An array of arrays, with cipher formed into words of len(highest factor)
+        self.chunks = []
+        for line in self.cipher_lines:
+            for chunk in line:
+                self.chunks.append(chunk)
         self.char_freq = self.get_char_freq_distribution()
         for d in self.char_freq:
             print(d)
-        self.recover_keyword(self.char_freq)
+        self.analyse_keyword(self.char_freq)
+        print(self.recover_plaintext("public")) # Ideally I would like to automatically recover the keyword but it is outside the necessary scope for this assignment
 
     def get_trigraphs(self):
         # returns all trigraphs (groups of 3 characters) in cipher as keys and amount they appear as values
@@ -95,15 +99,11 @@ class Vignere:
         return lines
 
     def get_char_freq_distribution(self):
-        words = []
-        for line in self.cipher_lines:
-            for word in line:
-                words.append(word)
         dicts = [] # we need a dictionary for each letter in the key word
         for i in range(0, self.highest_factor):
             d = {}
             dicts.append(d)
-        for word in words:
+        for word in self.chunks:
             for i in range(0, self.highest_factor):
                 if word[i] in dicts[i].keys():
                     dicts[i][word[i]] += 1
@@ -125,7 +125,7 @@ class Vignere:
                 return k
         return None
 
-    def recover_keyword(self, dicts):
+    def analyse_keyword(self, dicts):
         for d in dicts:
             greatest = ""
             for k in d.keys():
@@ -135,5 +135,20 @@ class Vignere:
                     if d[k] > d[greatest]:
                         greatest = k
             print("{} -> {} -> {}".format(greatest, self.get_letter_by_letter_steps(greatest, 'e'), self.get_letter_by_letter_steps(greatest, 't')))
+
+    def recover_plaintext(self, key):
+        # at this point words and key are same length so it is just simple iterations
+        text = []
+        for chunk in self.chunks:
+            s = ""
+            for i, c in enumerate(chunk):
+                s += self.get_letter_by_letter_steps(c, key[i])
+            text.append(s)
+            s = ""
+        t = ""
+        for _t in text:
+            t += _t
+        return t
+
 
 v = Vignere("pgbuwtelpmtgbcoptgrnszvkruvnbkdhqcwvdwpwakhbphbqelpemeivjolggmgcwopwpczwenbfkvxiopmtpgbwqexivdiwrnjzvgtlntojicoqtwthdpbjtuvnbkdhqcwetyetvihcolucchfcqpriodquiyoeekibusmcjwutwpgompahdlfiioeffepgpodeqqcyfcukvbunpqdmfewdaidvjksmjyaggnglsgqcedavtumaiabyoeargigttgqceomthiqpvutumpldxxtazkdluzbjtqjyvggxfemtbcolbkdhqsiutislecgxusmkiynewudgfzvgdnipzvwuoepgayhtbkbuupekchfcnwgnipzodlfepggynlggmctekqafvdqqcvfeegthusmcjwutwptyslvfhinpwhibfmqfsysdakbcmlzvdmittnxhhtvithfcinpfmdkjtgfdkccvfntchmjqqgsudnwtscorbqwixepgnxfltyxniepkhjszjntgxppckyjompicgtmfibfqwnaixtviilvdbodxfwacjwutwptysezwhnusquxmusmgpmjpavpheepgbitecppwdpxvpvmpaqaoutwpibfepgelpmtgbcoqieinipejdffazqqffxavtgtqzqbqipbjtlusmcjwutwptysswptmuwghdfmzeuibfazqiidztqghpeiuhontviibbebjtuvnbkdhfpzkhuuccuiqpcbjnbphmxtltztxtmnlvagympdccnqcwdayndmihydfzkisbywpngjeggiwusquxmxsgcaffiquicorqpiysymvpodeqqcmjemuuomwgvgotebjtuvnbkdhfpz")
